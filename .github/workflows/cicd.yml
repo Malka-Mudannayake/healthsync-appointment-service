@@ -1,0 +1,77 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Verify Checked-out Code
+        run: |
+          git log -1
+          ls -al
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-southeast-1
+
+      - name: Install eksctl
+        run: |
+          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.112.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
+          sudo mv /tmp/eksctl /usr/local/bin
+
+      - name: Write kubeconfig using eksctl
+        run: |
+          eksctl utils write-kubeconfig --region ap-southeast-1 --cluster health-sync
+          aws eks update-kubeconfig --region ap-southeast-1 --name health-sync
+
+      - name: Verify kubeconfig and cluster access
+        run: |
+          kubectl config view
+          kubectl get nodes
+
+      - name: Debug AWS Identity
+        run: |
+          aws sts get-caller-identity
+      
+      - name: Log in to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin 209479279888.dkr.ecr.ap-southeast-1.amazonaws.com
+
+      - name: Build Docker image
+        run: |
+          docker build --no-cache -t healthsync/appointment-service .
+
+      - name: Tag Docker image
+        run: |
+          docker tag healthsync/appointment-service:latest 209479279888.dkr.ecr.ap-southeast-1.amazonaws.com/healthsync/appointment-service:latest
+
+      - name: Push Docker image to ECR
+        run: |
+          docker push 209479279888.dkr.ecr.ap-southeast-1.amazonaws.com/healthsync/appointment-service:latest
+
+      - name: Delete existing deployment (if exists)
+        run: |
+          kubectl get deployment appointment-service-deployment || echo "Deployment not found, skipping delete."
+          kubectl delete deployment appointment-service-deployment || echo "No deployment to delete, skipping."
+
+      - name: Apply deployment.yaml
+        run: |
+          kubectl apply -f ./deployment.yaml
+
+      - name: Wait for deployment rollout
+        run: |
+          kubectl rollout status deployment/appointment-service-deployment

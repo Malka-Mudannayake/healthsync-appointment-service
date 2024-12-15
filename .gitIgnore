@@ -1,0 +1,44 @@
+# Byte-compiled / optimized / DLL files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Virtual environment
+venv/
+env/
+
+# Environment variables
+*.env
+.env.*
+
+# Flask-specific
+instance/
+*.log
+*.sqlite3
+*.db
+
+# Pytest / Coverage
+.pytest_cache/
+coverage/
+.coverage
+.cache/
+*.cover
+htmlcov/
+
+
+# IDE and editor files
+.idea/
+*.swp
+*.swo
+*.orig
+
+# macOS
+.DS_Store
+
+# Distribution / Packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+

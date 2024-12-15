@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: appointment-service-deployment
+  labels:
+    app: appointment-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: appointment-service
+  template:
+    metadata:
+      labels:
+        app: appointment-service
+    spec:
+      containers:
+      - name: appointment-service
+        image: 209479279888.dkr.ecr.ap-southeast-1.amazonaws.com/healthsync/appointment-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          value: "AKIATBRPQEUICDZTOPQY"
+        - name: AWS_SECRET_ACCESS_KEY
+          value: "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"
+        - name: AWS_DEFAULT_REGION
+          value: "ap-southeast-1"
