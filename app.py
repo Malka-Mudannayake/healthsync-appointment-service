@@ -13,7 +13,7 @@ NOTIFICATION_SERVICE_URL = 'http://notification-service:82/notification/send-not
 # Initialize Flask app
 app = Flask(__name__)
 
-# Initialize DynamoDB client
+# Initialize DynamoDB client 
 dynamodb = boto3.resource('dynamodb', region_name='ap-southeast-1')
 appointment_table = dynamodb.Table('appointments')
 booking_table = dynamodb.Table('bookings')
